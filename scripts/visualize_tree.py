@@ -10,7 +10,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
+from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.preprocessing import StandardScaler
 
@@ -147,12 +147,6 @@ def main(
     print("\nVisualizing...")
     visualize_tree(tree, feature_names, class_names, output_dir / "decision_tree.png", max_depth)
     visualize_importance(tree, feature_names, output_dir / "feature_importance.png")
-
-    # ルールをテキスト出力
-    rules_path = output_dir / "decision_tree_rules.txt"
-    with open(rules_path, "w") as f:
-        f.write(export_text(tree, feature_names=feature_names, class_names=class_names))
-    print(f"  Saved: {rules_path}")
 
     print("\nDone!")
 
