@@ -54,6 +54,18 @@ class SnowCrystalClassifier:
         features = self._extract_features_batch(X)
         return self.classifier.predict(features)
 
+    def extract_features(self, images):
+        """
+        画像から特徴量を抽出する
+
+        Args:
+            images: 画像データ (N, H, W, C)
+
+        Returns:
+            特徴量配列 (N, n_features)
+        """
+        return self._extract_features_batch(images)
+
     def _extract_features_batch(self, images):
         """複数画像から特徴量を抽出する"""
         return np.array([self._extract_features(img) for img in images])

@@ -9,7 +9,6 @@ import argparse
 from pathlib import Path
 from typing import cast
 
-import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -22,40 +21,8 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 
-
 from snow_crystal_classifier import SnowCrystalClassifier
-
-
-
-def resize_with_padding(image: np.ndarray, target_size: tuple[int, int]) -> np.ndarray:
-    """アスペクト比を維持しながらパディングでサイズを揃える"""
-    h, w = image.shape[:2]
-    target_h, target_w = target_size
-    scale = min(target_w / w, target_h / h)
-    new_w, new_h = int(w * scale), int(h * scale)
-
-    resized = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
-    padded = np.zeros((target_h, target_w, image.shape[2]), dtype=image.dtype)
-    pad_h, pad_w = (target_h - new_h) // 2, (target_w - new_w) // 2
-    padded[pad_h:pad_h + new_h, pad_w:pad_w + new_w] = resized
-    return padded
-
-
-def load_dataset(data_dir: Path, image_size: tuple[int, int]) -> tuple[np.ndarray, np.ndarray, list[str]]:
-    """データセットを読み込む"""
-    class_names = ["graupel", "snowflake"]
-    images, labels = [], []
-
-    for label, class_name in enumerate(class_names):
-        class_dir = data_dir / class_name
-        for img_path in sorted(class_dir.glob("*.png")):
-            img = cv2.imread(str(img_path))
-            if img is not None:
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                images.append(resize_with_padding(img, image_size))
-                labels.append(label)
-
-    return np.array(images), np.array(labels), class_names
+from utils import load_dataset
 
 
 def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float | np.ndarray]:
@@ -80,8 +47,8 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float |
 
 
 def run_cross_validation(
-    X: np.ndarray,
-    y: np.ndarray,
+    images: np.ndarray,
+    labels: np.ndarray,
     n_folds: int = 5,
     random_seed: int = 42,
 ) -> tuple[dict[str, float | np.ndarray], dict[str, float]]:
@@ -89,8 +56,8 @@ def run_cross_validation(
     クロスバリデーションを実行する
 
     Args:
-        X: 画像データ (N, H, W, C)
-        y: ラベル (N,)
+        images: 画像データ (N, H, W, C)
+        labels: ラベル (N,)
         n_folds: 分割数
         random_seed: 乱数シード
 
@@ -113,25 +80,25 @@ def run_cross_validation(
     all_labels = []
 
     # 各Foldで訓練と評価を実行
-    for fold_idx, (train_idx, test_idx) in enumerate(skf.split(X, y)):
+    for fold_idx, (train_idx, test_idx) in enumerate(skf.split(images, labels)):
         # 訓練データとテストデータに分割
-        X_train, X_test = X[train_idx], X[test_idx]
-        y_train, y_test = y[train_idx], y[test_idx]
+        images_train, images_test = images[train_idx], images[test_idx]
+        labels_train, labels_test = labels[train_idx], labels[test_idx]
 
         # 分類器を作成して訓練
         clf = SnowCrystalClassifier(random_state=random_seed)
-        clf.fit(X_train, y_train)
+        clf.fit(images_train, labels_train)
 
         # テストデータで予測
-        y_pred = clf.predict(X_test)
+        labels_pred = clf.predict(images_test)
 
         # 評価指標を計算
-        metrics = compute_metrics(y_test, y_pred)
+        metrics = compute_metrics(labels_test, labels_pred)
         fold_metrics.append(metrics)
 
         # 全予測結果を保存
-        all_preds.extend(y_pred)
-        all_labels.extend(y_test)
+        all_preds.extend(labels_pred)
+        all_labels.extend(labels_test)
 
         print(f"  Fold {fold_idx + 1}/{n_folds} - Accuracy: {metrics['accuracy']:.4f}, F1: {metrics['f1']:.4f}")
 
@@ -190,12 +157,12 @@ def main(
 
     # データ読み込み
     print("\nLoading data...")
-    X, y, class_names = load_dataset(data_dir, (image_size, image_size))
-    print(f"  Samples: {len(X)}, Classes: {dict(zip(class_names, np.bincount(y)))}")
+    images, labels, class_names = load_dataset(data_dir, (image_size, image_size))
+    print(f"  Samples: {len(images)}, Classes: {dict(zip(class_names, np.bincount(labels)))}")
 
     # クロスバリデーション
     print(f"\nRunning {n_folds}-fold cross validation...")
-    metrics, std = run_cross_validation(X, y, n_folds, seed)
+    metrics, std = run_cross_validation(images, labels, n_folds, seed)
 
     # 結果表示
     print("\n" + "=" * 60)

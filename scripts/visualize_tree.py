@@ -7,43 +7,13 @@ DecisionTreeClassifierを使用して霰/雪片を分類し、決定木を可視
 import argparse
 from pathlib import Path
 
-import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 
 from snow_crystal_classifier import SnowCrystalClassifier
-
-
-def resize_with_padding(image: np.ndarray, target_size: tuple[int, int]) -> np.ndarray:
-    """アスペクト比を維持しながらパディングでサイズを揃える"""
-    h, w = image.shape[:2]
-    target_h, target_w = target_size
-    scale = min(target_w / w, target_h / h)
-    new_w, new_h = int(w * scale), int(h * scale)
-
-    resized = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
-    padded = np.zeros((target_h, target_w, image.shape[2]), dtype=image.dtype)
-    pad_h, pad_w = (target_h - new_h) // 2, (target_w - new_w) // 2
-    padded[pad_h:pad_h + new_h, pad_w:pad_w + new_w] = resized
-    return padded
-
-
-def load_dataset(data_dir: Path, image_size: tuple[int, int]) -> tuple[np.ndarray, np.ndarray, list[str]]:
-    """データセットを読み込む"""
-    class_names = ["graupel", "snowflake"]
-    images, labels = [], []
-
-    for label, class_name in enumerate(class_names):
-        for img_path in sorted((data_dir / class_name).glob("*.png")):
-            img = cv2.imread(str(img_path))
-            if img is not None:
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                images.append(resize_with_padding(img, image_size))
-                labels.append(label)
-
-    return np.array(images), np.array(labels), class_names
+from utils import load_dataset
 
 
 def extract_features(images: np.ndarray) -> tuple[np.ndarray, list[str]]:
@@ -54,7 +24,7 @@ def extract_features(images: np.ndarray) -> tuple[np.ndarray, list[str]]:
         特徴量配列と特徴量名のリスト
     """
     extractor = SnowCrystalClassifier()
-    features = extractor._extract_features_batch(images)
+    features = extractor.extract_features(images)
     feature_names = extractor.get_feature_names()
     return features, feature_names
 
@@ -84,11 +54,16 @@ def visualize_importance(
 ) -> None:
     """特徴量の重要度を可視化する"""
     importances = tree.feature_importances_
-    indices = np.argsort(importances)[::-1][:top_n]
+    # 重要度の高い順にソート
+    sorted_indices = np.argsort(importances)[::-1]  # 降順にソート
+    # 上位top_n個を取得
+    indices = sorted_indices[:top_n]
 
     fig, ax = plt.subplots(figsize=(10, 8))
     cmap = plt.colormaps.get_cmap("viridis")
-    ax.barh(range(top_n), importances[indices][::-1], color=cmap(np.linspace(0.2, 0.8, top_n)[::-1]))
+    # グラデーションカラーを生成（viridisカラーマップの0.2〜0.8の範囲を逆順で使用）
+    colors = cmap(np.linspace(0.2, 0.8, top_n)[::-1])
+    ax.barh(range(top_n), importances[indices][::-1], color=colors)
     ax.set_yticks(range(top_n))
     ax.set_yticklabels([feature_names[i] for i in indices[::-1]])
     ax.set_xlabel("Feature Importance")
@@ -116,12 +91,12 @@ def main(
 
     # データ読み込み
     print("\nLoading data...")
-    X, y, class_names = load_dataset(data_dir, (image_size, image_size))
-    print(f"  Samples: {len(X)}")
+    images, labels, class_names = load_dataset(data_dir, (image_size, image_size))
+    print(f"  Samples: {len(images)}")
 
     # 特徴量抽出
     print("Extracting features...")
-    features, feature_names = extract_features(X)
+    features, feature_names = extract_features(images)
     print(f"  Features: {features.shape[1]}")
 
     # クロスバリデーション
@@ -132,12 +107,12 @@ def main(
     )
     print("\nCross-validation...")
     cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=seed)
-    scores = cross_val_score(tree, features, y, cv=cv)
+    scores = cross_val_score(tree, features, labels, cv=cv)
     print(f"  Accuracy: {scores.mean():.4f} ± {scores.std():.4f}")
 
     # 全データで訓練
     print("\nTraining on full dataset...")
-    tree.fit(features, y)
+    tree.fit(features, labels)
     print(f"  Depth: {tree.get_depth()}, Leaves: {tree.get_n_leaves()}")
 
     # 可視化
