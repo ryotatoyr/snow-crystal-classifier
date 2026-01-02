@@ -16,7 +16,13 @@ import seaborn as sns
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
-from classifier import SnowCrystalClassifier
+import sys
+from pathlib import Path
+
+# srcディレクトリをパスに追加
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from snow_crystal_classifier import SnowCrystalClassifier
 
 
 

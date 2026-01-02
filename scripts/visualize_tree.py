@@ -14,25 +14,13 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.preprocessing import StandardScaler
 
-from classifier import SnowCrystalClassifier
+import sys
+from pathlib import Path
 
+# srcディレクトリをパスに追加
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-# 特徴量名
-FEATURE_NAMES = [
-    # 形状 (10)
-    "circularity", "area_ratio", "aspect_ratio", "extent", "solidity", "complexity",
-    "hu_1", "hu_2", "hu_3", "hu_4",
-    # LBP (16)
-    *[f"lbp_{i}" for i in range(16)],
-    # Gabor (16)
-    *[f"gabor_{d}_{s}_{stat}" for d in ["0", "45", "90", "135"] for s in ["3", "5"] for stat in ["mean", "std"]],
-    # エッジ (12)
-    "edge_density", "gradient_mean", "gradient_std", "laplacian_var",
-    *[f"dir_hist_{i}" for i in range(8)],
-    # 統計 (11)
-    "intensity_mean", "intensity_std", "intensity_range", "entropy", "skewness", "kurtosis",
-    "pct_10", "pct_25", "pct_50", "pct_75", "pct_90",
-]
+from snow_crystal_classifier import SnowCrystalClassifier
 
 
 def resize_with_padding(image: np.ndarray, target_size: tuple[int, int]) -> np.ndarray:
@@ -65,16 +53,23 @@ def load_dataset(data_dir: Path, image_size: tuple[int, int]) -> tuple[np.ndarra
     return np.array(images), np.array(labels), class_names
 
 
-def extract_features(images: np.ndarray) -> np.ndarray:
-    """画像から特徴量を抽出する"""
+def extract_features(images: np.ndarray) -> tuple[np.ndarray, list[str]]:
+    """
+    画像から特徴量を抽出する
+    
+    Returns:
+        特徴量配列と特徴量名のリスト
+    """
     extractor = SnowCrystalClassifier()
-    return extractor._extract_features_batch(images)
+    features = extractor._extract_features_batch(images)
+    feature_names = extractor.get_feature_names()
+    return features, feature_names
 
 
-def visualize_tree(tree: DecisionTreeClassifier, class_names: list[str], output_path: Path, max_depth: int) -> None:
+def visualize_tree(tree: DecisionTreeClassifier, feature_names: list[str], class_names: list[str], output_path: Path, max_depth: int) -> None:
     """決定木を可視化する"""
     fig, ax = plt.subplots(figsize=(24, 16))
-    plot_tree(tree, feature_names=FEATURE_NAMES, class_names=class_names,
+    plot_tree(tree, feature_names=feature_names, class_names=class_names,
               filled=True, rounded=True, ax=ax, max_depth=max_depth, fontsize=8, proportion=True)
     ax.set_title(f"Decision Tree (depth={tree.get_depth()}, leaves={tree.get_n_leaves()})", fontsize=14)
     plt.tight_layout()
@@ -83,7 +78,7 @@ def visualize_tree(tree: DecisionTreeClassifier, class_names: list[str], output_
     print(f"  Saved: {output_path}")
 
 
-def visualize_importance(tree: DecisionTreeClassifier, output_path: Path, top_n: int = 20) -> None:
+def visualize_importance(tree: DecisionTreeClassifier, feature_names: list[str], output_path: Path, top_n: int = 20) -> None:
     """特徴量の重要度を可視化する"""
     importances = tree.feature_importances_
     indices = np.argsort(importances)[::-1][:top_n]
@@ -92,7 +87,7 @@ def visualize_importance(tree: DecisionTreeClassifier, output_path: Path, top_n:
     cmap = plt.colormaps.get_cmap("viridis")
     ax.barh(range(top_n), importances[indices][::-1], color=cmap(np.linspace(0.2, 0.8, top_n)[::-1]))
     ax.set_yticks(range(top_n))
-    ax.set_yticklabels([FEATURE_NAMES[i] for i in indices[::-1]])
+    ax.set_yticklabels([feature_names[i] for i in indices[::-1]])
     ax.set_xlabel("Feature Importance")
     ax.set_title(f"Top {top_n} Feature Importances")
     ax.grid(axis="x", alpha=0.3)
@@ -117,7 +112,7 @@ def main(data_dir: Path, output_dir: Path, max_depth: int, n_folds: int, image_s
 
     # 特徴量抽出
     print("Extracting features...")
-    features = extract_features(X)
+    features, feature_names = extract_features(X)
     print(f"  Features: {features.shape[1]}")
 
     # 標準化
@@ -138,13 +133,13 @@ def main(data_dir: Path, output_dir: Path, max_depth: int, n_folds: int, image_s
 
     # 可視化
     print("\nVisualizing...")
-    visualize_tree(tree, class_names, output_dir / "decision_tree.png", max_depth)
-    visualize_importance(tree, output_dir / "feature_importance.png")
+    visualize_tree(tree, feature_names, class_names, output_dir / "decision_tree.png", max_depth)
+    visualize_importance(tree, feature_names, output_dir / "feature_importance.png")
 
     # ルールをテキスト出力
     rules_path = output_dir / "decision_tree_rules.txt"
     with open(rules_path, "w") as f:
-        f.write(export_text(tree, feature_names=FEATURE_NAMES, class_names=class_names))
+        f.write(export_text(tree, feature_names=feature_names, class_names=class_names))
     print(f"  Saved: {rules_path}")
 
     print("\nDone!")
@@ -154,7 +149,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="決定木の訓練と可視化")
     parser.add_argument("--data-dir", type=str, default="dataset")
     parser.add_argument("--output-dir", type=str, default="output")
-    parser.add_argument("--max-depth", type=int, default=5)
+    parser.add_argument("--max-depth", type=int, default=3)
     parser.add_argument("--n-folds", type=int, default=5)
     parser.add_argument("--image-size", type=int, default=128)
     parser.add_argument("--seed", type=int, default=42)

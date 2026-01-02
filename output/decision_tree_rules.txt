@@ -1,61 +1,22 @@
 |--- hu_1 <= 0.59
 |   |--- extent <= 1.86
 |   |   |--- circularity <= 0.48
-|   |   |   |--- pct_50 <= -0.60
-|   |   |   |   |--- class: snowflake
-|   |   |   |--- pct_50 >  -0.60
-|   |   |   |   |--- class: snowflake
-|   |   |--- circularity >  0.48
-|   |   |   |--- hu_2 <= -0.18
-|   |   |   |   |--- class: snowflake
-|   |   |   |--- hu_2 >  -0.18
-|   |   |   |   |--- hu_4 <= 0.18
-|   |   |   |   |   |--- class: snowflake
-|   |   |   |   |--- hu_4 >  0.18
-|   |   |   |   |   |--- class: graupel
-|   |--- extent >  1.86
-|   |   |--- area_ratio <= -0.32
 |   |   |   |--- class: snowflake
-|   |   |--- area_ratio >  -0.32
+|   |   |--- circularity >  0.48
+|   |   |   |--- class: snowflake
+|   |--- extent >  1.86
+|   |   |--- gabor_135_3_mean <= -0.25
+|   |   |   |--- class: snowflake
+|   |   |--- gabor_135_3_mean >  -0.25
 |   |   |   |--- class: graupel
 |--- hu_1 >  0.59
 |   |--- hu_1 <= 0.82
 |   |   |--- lbp_9 <= -0.07
-|   |   |   |--- dir_hist_6 <= 1.08
-|   |   |   |   |--- gabor_90_3_std <= -0.60
-|   |   |   |   |   |--- class: snowflake
-|   |   |   |   |--- gabor_90_3_std >  -0.60
-|   |   |   |   |   |--- class: graupel
-|   |   |   |--- dir_hist_6 >  1.08
-|   |   |   |   |--- class: snowflake
+|   |   |   |--- class: graupel
 |   |   |--- lbp_9 >  -0.07
-|   |   |   |--- pct_75 <= 0.95
-|   |   |   |   |--- lbp_9 <= 1.84
-|   |   |   |   |   |--- class: snowflake
-|   |   |   |   |--- lbp_9 >  1.84
-|   |   |   |   |   |--- class: graupel
-|   |   |   |--- pct_75 >  0.95
-|   |   |   |   |--- pct_75 <= 1.34
-|   |   |   |   |   |--- class: graupel
-|   |   |   |   |--- pct_75 >  1.34
-|   |   |   |   |   |--- class: snowflake
+|   |   |   |--- class: snowflake
 |   |--- hu_1 >  0.82
 |   |   |--- skewness <= -0.48
-|   |   |   |--- circularity <= 0.59
-|   |   |   |   |--- lbp_9 <= 0.56
-|   |   |   |   |   |--- class: graupel
-|   |   |   |   |--- lbp_9 >  0.56
-|   |   |   |   |   |--- class: snowflake
-|   |   |   |--- circularity >  0.59
-|   |   |   |   |--- circularity <= 1.71
-|   |   |   |   |   |--- class: graupel
-|   |   |   |   |--- circularity >  1.71
-|   |   |   |   |   |--- class: graupel
+|   |   |   |--- class: graupel
 |   |   |--- skewness >  -0.48
-|   |   |   |--- hu_1 <= 0.84
-|   |   |   |   |--- class: snowflake
-|   |   |   |--- hu_1 >  0.84
-|   |   |   |   |--- dir_hist_7 <= 1.74
-|   |   |   |   |   |--- class: graupel
-|   |   |   |   |--- dir_hist_7 >  1.74
-|   |   |   |   |   |--- class: snowflake
+|   |   |   |--- class: graupel
