@@ -16,6 +16,14 @@ cd snow-crystal-classifier
 uv sync
 ```
 
+### データセットの準備
+
+```bash
+unzip dataset.zip
+```
+
+これで `dataset/` フォルダに画像データが展開されます。
+
 ## 使い方
 
 ### 分類器の実行
