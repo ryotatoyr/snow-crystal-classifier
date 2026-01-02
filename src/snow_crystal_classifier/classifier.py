@@ -3,7 +3,6 @@
 import cv2
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
 
 
 class SnowCrystalClassifier:
@@ -13,25 +12,19 @@ class SnowCrystalClassifier:
     画像から特徴量を抽出し、RandomForestで霰(graupel)と雪片(snowflake)を分類する
     """
 
-    def __init__(self, n_estimators=100, max_depth=-1, random_state=42):
+    def __init__(self, random_state=42):
         """
         Args:
-            n_estimators: 決定木の数
-            max_depth: 決定木の最大深さ
             random_state: 乱数シード
         """
-        self.n_estimators = n_estimators
-        self.max_depth = max_depth
-        self.random_state = random_state
-        self.scaler = StandardScaler()
         self.classifier = RandomForestClassifier(
-            n_estimators=n_estimators,
-            max_depth=max_depth,
-            class_weight="balanced",
-            random_state=random_state,
-            n_jobs=-1,
+            n_estimators=100,    # 決定木の数
+            max_depth=7,         # 決定木の最大深さ
+            class_weight="balanced",  # クラスの重み付け
+            random_state=random_state,  # 乱数シード
+            n_jobs=-1,           # 並列処理の使用
         )
-        self._feature_names = None  # 特徴量名をキャッシュ
+        self._feature_names = None
 
     def fit(self, X_train, y_train):
         """
@@ -45,7 +38,6 @@ class SnowCrystalClassifier:
             self
         """
         features = self._extract_features_batch(X_train)
-        features = self.scaler.fit_transform(features)
         self.classifier.fit(features, y_train)
         return self
 
@@ -60,7 +52,6 @@ class SnowCrystalClassifier:
             予測ラベル (N,)
         """
         features = self._extract_features_batch(X)
-        features = self.scaler.transform(features)
         return self.classifier.predict(features)
 
     def _extract_features_batch(self, images):
@@ -74,11 +65,6 @@ class SnowCrystalClassifier:
         Returns:
             特徴量名のリスト
         """
-        if self._feature_names is None:
-            # 特徴量名がまだ生成されていない場合は、ダミー画像で生成
-            dummy_image = np.zeros((100, 100, 3), dtype=np.uint8)
-            self._extract_features(dummy_image)
-
         assert self._feature_names is not None
         return self._feature_names.copy()
 
@@ -206,7 +192,7 @@ class SnowCrystalClassifier:
             lbp += ((neighbor >= gray).astype(np.uint8) << i)
         # LBPヒストグラム（16ビンに正規化）
         hist, _ = np.histogram(lbp.ravel(), bins=16, range=(0, 256))
-        hist_normalized = (hist / (hist.sum() + 1e-7)).tolist()
+        hist_normalized = (hist / hist.sum()).tolist()
         self._add_features(features, feature_names, {
             f"lbp_{i}": hist_normalized[i] for i in range(16)
         })
@@ -237,7 +223,7 @@ class SnowCrystalClassifier:
 
         # 勾配方向のヒストグラム（8方向）
         dir_hist, _ = np.histogram(direction.ravel(), bins=8, range=(-np.pi, np.pi))
-        dir_hist = dir_hist / (dir_hist.sum() + 1e-7)
+        dir_hist = dir_hist / dir_hist.sum()
 
         # Laplacian: エッジの鮮明さ（分散が大きいほど鮮明）
         laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var() / 1000
@@ -261,13 +247,13 @@ class SnowCrystalClassifier:
 
         # エントロピー（情報量の尺度）
         hist, _ = np.histogram(gray.ravel(), bins=256, range=(0, 256))
-        hist = hist / (hist.sum() + 1e-7)
-        entropy = -np.sum(hist * np.log2(hist + 1e-7))
+        hist = hist / hist.sum()
+        entropy = -np.sum(hist[hist > 0] * np.log2(hist[hist > 0]))
 
         # 歪度と尖度（分布の形状）
         centered = gray.astype(np.float64) - mean
-        skewness = np.mean(centered ** 3) / (std ** 3 + 1e-7)
-        kurtosis = np.mean(centered ** 4) / (std ** 4 + 1e-7) - 3
+        skewness = np.mean(centered ** 3) / std ** 3 if std > 0 else 0
+        kurtosis = (np.mean(centered ** 4) / std ** 4 - 3) if std > 0 else 0
 
         # パーセンタイル
         percentiles = np.percentile(gray.ravel(), [10, 25, 50, 75, 90]) / 255

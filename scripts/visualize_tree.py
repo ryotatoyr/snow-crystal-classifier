@@ -12,7 +12,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.model_selection import StratifiedKFold, cross_val_score
-from sklearn.preprocessing import StandardScaler
 
 from snow_crystal_classifier import SnowCrystalClassifier
 
@@ -125,16 +124,15 @@ def main(
     features, feature_names = extract_features(X)
     print(f"  Features: {features.shape[1]}")
 
-    # 標準化
-    scaler = StandardScaler()
-    features = scaler.fit_transform(features)
-
     # クロスバリデーション
-    # max_depthはここで直接編集してください
-    tree = DecisionTreeClassifier(max_depth=3, class_weight="balanced", random_state=seed)
-    print(f"\nCross-validation (max_depth={tree.max_depth})...")
-    scores = cross_val_score(tree, features, y,
-                             cv=StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=seed))
+    tree = DecisionTreeClassifier(
+        max_depth=3,
+        class_weight="balanced",
+        random_state=seed,
+    )
+    print("\nCross-validation...")
+    cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=seed)
+    scores = cross_val_score(tree, features, y, cv=cv)
     print(f"  Accuracy: {scores.mean():.4f} ± {scores.std():.4f}")
 
     # 全データで訓練
