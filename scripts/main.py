@@ -82,51 +82,22 @@ def run_cross_validation(
     # 各Foldで訓練と評価を実行
     for fold_idx, (train_idx, test_idx) in enumerate(skf.split(images, labels)):
         # TODO: 以下を実装してください
-        
-        # ヒント1: 訓練データとテストデータに分割
-        # images_train = [images[i] for i in train_idx]
-        # images_test = [images[i] for i in test_idx]
-        # labels_train, labels_test = labels[train_idx], labels[test_idx]
-
-        # ヒント2: 分類器を作成して訓練
-        # clf = SnowCrystalClassifier(random_state=random_seed)
-        # clf.fit(images_train, labels_train)
-
-        # ヒント3: テストデータで予測
-        # labels_pred = clf.predict(images_test)
-
-        # ヒント4: 評価指標を計算
-        # metrics = compute_metrics(labels_test, labels_pred)
-        # fold_metrics.append(metrics)
-
-        # ヒント5: 全予測結果を保存（混同行列の計算用）
-        # all_preds.extend(labels_pred)
-        # all_labels.extend(labels_test)
-
-        # ヒント6: 進捗を表示
-        # print(f"  Fold {fold_idx + 1}/{n_folds} - Accuracy: {metrics['accuracy']:.4f}, F1: {metrics['f1']:.4f}")
+        #
+        # 1. train_idx と test_idx を使って、images と labels を訓練用とテスト用に分割
+        # 2. SnowCrystalClassifier を作成して訓練
+        # 3. テストデータで予測
+        # 4. compute_metrics 関数で評価指標を計算し、fold_metrics に追加
+        # 5. 全予測結果を all_preds と all_labels に保存（後で混同行列を計算するため）
+        # 6. 各Foldの進捗を表示（オプション）
         pass
 
-    # TODO: 平均と標準偏差を計算してください
-    
-    # ヒント7: 各Foldの結果から平均を計算
-    # mean_metrics = {
-    #     "accuracy": np.mean([m["accuracy"] for m in fold_metrics]),
-    #     "precision": np.mean([m["precision"] for m in fold_metrics]),
-    #     "recall": np.mean([m["recall"] for m in fold_metrics]),
-    #     "f1": np.mean([m["f1"] for m in fold_metrics]),
-    #     "confusion_matrix": confusion_matrix(all_labels, all_preds),
-    # }
-    
-    # ヒント8: 標準偏差を計算
-    # std_metrics: dict[str, float] = {
-    #     "accuracy": float(np.std([m["accuracy"] for m in fold_metrics])),
-    #     "precision": float(np.std([m["precision"] for m in fold_metrics])),
-    #     "recall": float(np.std([m["recall"] for m in fold_metrics])),
-    #     "f1": float(np.std([m["f1"] for m in fold_metrics])),
-    # }
+    # TODO: 評価指標の平均と標準偏差を計算してください
+    #
+    # - fold_metrics から各指標の平均を計算して mean_metrics に格納
+    # - fold_metrics から各指標の標準偏差を計算して std_metrics に格納
+    # - 混同行列は all_labels と all_preds から計算
+    # - mean_metrics と std_metrics を return
 
-    # return mean_metrics, std_metrics
     raise NotImplementedError("この関数を実装してください")
 
 
