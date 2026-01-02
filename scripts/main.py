@@ -22,7 +22,7 @@ from sklearn.metrics import (
 )
 
 from snow_crystal_classifier import SnowCrystalClassifier
-from utils import load_dataset
+from snow_crystal_classifier.utils import load_dataset
 
 
 def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float | np.ndarray]:

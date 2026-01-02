@@ -13,7 +13,7 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 
 from snow_crystal_classifier import SnowCrystalClassifier
-from utils import load_dataset
+from snow_crystal_classifier.utils import load_dataset
 
 
 def extract_features(images: list[np.ndarray]) -> tuple[np.ndarray, list[str]]:
