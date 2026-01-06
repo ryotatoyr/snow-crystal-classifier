@@ -17,9 +17,13 @@ uv sync
 ```
 
 ### データセットの準備
-
+Mac/Linux: 
 ```bash
 unzip dataset.zip
+```
+Windows: 
+```bash
+Expand-Archive -Path dataset.zip -DestinationPath . -Force
 ```
 
 これで `dataset/` フォルダに画像データが展開されます。

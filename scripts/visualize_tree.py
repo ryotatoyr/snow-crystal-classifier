@@ -7,10 +7,10 @@ DecisionTreeClassifierを使用して霰/雪片を分類し、決定木を可視
 import argparse
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.tree import DecisionTreeClassifier, plot_tree
+import numpy as np
 from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.tree import DecisionTreeClassifier, plot_tree
 
 from snow_crystal_classifier import SnowCrystalClassifier
 from snow_crystal_classifier.utils import load_dataset
@@ -19,10 +19,10 @@ from snow_crystal_classifier.utils import load_dataset
 def extract_features(images: list[np.ndarray]) -> tuple[np.ndarray, list[str]]:
     """
     画像から特徴量を抽出する
-    
+
     Args:
         images: 画像データのリスト（各画像は(H, W, C)のRGB画像）
-    
+
     Returns:
         特徴量配列と特徴量名のリスト
     """
@@ -40,8 +40,16 @@ def visualize_tree(
 ) -> None:
     """決定木を可視化する"""
     fig, ax = plt.subplots(figsize=(24, 16))
-    plot_tree(tree, feature_names=feature_names, class_names=class_names,
-              filled=True, rounded=True, ax=ax, fontsize=8, proportion=True)
+    plot_tree(
+        tree,
+        feature_names=feature_names,
+        class_names=class_names,
+        filled=True,
+        rounded=True,
+        ax=ax,
+        fontsize=8,
+        proportion=True,
+    )
     ax.set_title("Decision Tree", fontsize=14)
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -59,18 +67,19 @@ def visualize_importance(
     importances = tree.feature_importances_
     # 重要度の高い順にソート
     sorted_indices = np.argsort(importances)[::-1]  # 降順にソート
-    # 上位top_n個を取得
-    indices = sorted_indices[:top_n]
+    # 上位top_n個を取得（ただし特徴量数を超えない）
+    n_features_to_show = min(top_n, len(feature_names))
+    indices = sorted_indices[:n_features_to_show]
 
     fig, ax = plt.subplots(figsize=(10, 8))
     cmap = plt.colormaps.get_cmap("viridis")
     # グラデーションカラーを生成（viridisカラーマップの0.2〜0.8の範囲を逆順で使用）
-    colors = cmap(np.linspace(0.2, 0.8, top_n)[::-1])
-    ax.barh(range(top_n), importances[indices][::-1], color=colors)
-    ax.set_yticks(range(top_n))
+    colors = cmap(np.linspace(0.2, 0.8, n_features_to_show)[::-1])
+    ax.barh(range(n_features_to_show), importances[indices][::-1], color=colors)
+    ax.set_yticks(range(n_features_to_show))
     ax.set_yticklabels([feature_names[i] for i in indices[::-1]])
     ax.set_xlabel("Feature Importance")
-    ax.set_title(f"Top {top_n} Feature Importances")
+    ax.set_title(f"Top {n_features_to_show} Feature Importances")
     ax.grid(axis="x", alpha=0.3)
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")

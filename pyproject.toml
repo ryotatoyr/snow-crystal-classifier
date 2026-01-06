@@ -21,3 +21,6 @@ build-backend = "hatchling.build"
 
 [tool.hatchling.build.targets.wheel]
 packages = ["src/snow_crystal_classifier"]
+
+[tool.uv]
+link-mode = "copy"
