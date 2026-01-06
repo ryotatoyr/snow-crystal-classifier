@@ -9,10 +9,10 @@ import numpy as np
 def load_dataset(data_dir: Path) -> tuple[list[np.ndarray], np.ndarray, list[str]]:
     """
     データセットを読み込む
-    
+
     Args:
         data_dir: データセットのディレクトリ
-    
+
     Returns:
         images: 画像のリスト（各画像はサイズが異なる可能性あり）
         labels: ラベル配列
@@ -31,4 +31,3 @@ def load_dataset(data_dir: Path) -> tuple[list[np.ndarray], np.ndarray, list[str
                 labels.append(label)
 
     return images, np.array(labels), class_names
-

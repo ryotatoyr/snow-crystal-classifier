@@ -3,4 +3,3 @@
 from .classifier import SnowCrystalClassifier
 
 __all__ = ["SnowCrystalClassifier"]
-
