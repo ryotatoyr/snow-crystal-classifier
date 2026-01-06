@@ -1,0 +1,9 @@
+﻿{
+  "python.interpreterPath": ".venv\\Scripts\\python.exe",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.ruff": "always",
+    "source.organizeImports.ruff": "always"
+  },
+  "editor.defaultFormatter": "charliermarsh.ruff"
+}

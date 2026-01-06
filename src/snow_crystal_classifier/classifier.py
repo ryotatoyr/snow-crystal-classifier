@@ -1,8 +1,13 @@
 """OpenCV特徴量ベースの雪晶分類器（RandomForest）"""
 
+from collections.abc import Sequence
+from typing import cast
+
 import cv2
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+
+# from skimage.feature import local_binary_pattern
 
 
 class SnowCrystalClassifier:
@@ -18,11 +23,11 @@ class SnowCrystalClassifier:
             random_state: 乱数シード
         """
         self.classifier = RandomForestClassifier(
-            n_estimators=100,    # 決定木の数
-            max_depth=7,         # 決定木の最大深さ
+            n_estimators=100,  # 決定木の数
+            max_depth=7,  # 決定木の最大深さ
             class_weight="balanced",  # クラスの重み付け
             random_state=random_state,  # 乱数シード
-            n_jobs=-1,           # 並列処理の使用
+            n_jobs=-1,  # 並列処理の使用
         )
         self._feature_names = None
 
@@ -73,7 +78,7 @@ class SnowCrystalClassifier:
     def get_feature_names(self):
         """
         特徴量名のリストを返す
-        
+
         Returns:
             特徴量名のリスト
         """
@@ -83,7 +88,7 @@ class SnowCrystalClassifier:
     def _add_features(self, features, feature_names, feature_dict):
         """
         特徴量名と値を同時に追加する
-        
+
         Args:
             features: 特徴量リスト
             feature_names: 特徴量名リスト（Noneの場合は名前を追加しない）
@@ -99,7 +104,9 @@ class SnowCrystalClassifier:
                     else:
                         # 配列の場合、各要素に名前を付ける
                         for i in range(len(value)):
-                            feature_names.append(f"{name}_{i}" if len(value) > 1 else name)
+                            feature_names.append(
+                                f"{name}_{i}" if len(value) > 1 else name
+                            )
             else:
                 features.append(value)
                 if feature_names is not None:
@@ -130,25 +137,61 @@ class SnowCrystalClassifier:
         # ========================================
         # 二値化して輪郭を抽出
         _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(
+            binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
 
-        if len(contours) == 0:
-            # 輪郭が見つからない場合はゼロで埋める
-            circularity = 0
-        else:
+        # 初期値（輪郭なしの場合に備える）
+        circularity = 0.0
+        area_ratio = 0.0
+        aspect_ratio = 0.0
+        complexity = 0.0
+
+        contours_list: list[np.ndarray] = list(cast(Sequence[np.ndarray], contours))
+        if contours_list:
+
+            def _contour_area(cnt: np.ndarray) -> float:
+                return float(cv2.contourArea(cnt))
+
             # 最大の輪郭を取得
-            largest = max(contours, key=cv2.contourArea)
+            largest = max(contours_list, key=_contour_area)
             area = cv2.contourArea(largest)
             perimeter = cv2.arcLength(largest, True)
 
             # 円形度: 真円に近いほど1に近づく
             # 霰（丸い）は1に近く、雪片（複雑な形）は小さくなる
-            circularity = 4 * np.pi * area / (perimeter ** 2) if perimeter > 0 else 0
+            circularity = 4 * np.pi * area / (perimeter**2) if perimeter > 0 else 0
+
+            # 面積比
+            area_ratio = area / (gray.shape[0] * gray.shape[1])
+
+            # アスペクト比
+            x, y, w, h = cv2.boundingRect(largest)
+            aspect_ratio = w / h if h > 0 else 0
+
+            # 複雑さ
+            complexity = perimeter / np.sqrt(area) if area > 0 else 0
+
+            # テクスチャ特徴
+            # lbp = local_binary_pattern(gray, P=8, R=1, method="uniform")
+            # (lbp_hist, _) = np.histogram(
+            #     lbp.ravel(),
+            #     bins=np.arange(0, 10),  # uniform LBPのパターン数に基づく
+            #     range=(0, 9),
+            # )
 
         # 特徴量を追加
-        self._add_features(features, feature_names, {
-            "circularity": circularity,
-        })
+        self._add_features(
+            features,
+            feature_names,
+            {
+                "circularity": circularity,
+                "area_ratio": area_ratio,
+                "aspect_ratio": aspect_ratio,
+                "complexity": complexity,
+                # "lbp_hist": lbp_hist / lbp_hist.sum(),
+            },
+        )
 
         # ========================================
         # TODO: ここに追加の特徴量を実装してください

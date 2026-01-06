@@ -11,6 +11,7 @@ dependencies = [
     "pandas>=2.3.3",
     "rich>=14.0.0",
     "ruff>=0.14.10",
+    "scikit-image>=0.26.0",
     "scikit-learn>=1.4.0",
     "seaborn>=0.13.0",
 ]
@@ -24,3 +25,35 @@ packages = ["src/snow_crystal_classifier"]
 
 [tool.uv]
 link-mode = "copy"
+
+[tool.uv.workspace]
+members = [
+    "help",
+]
+
+[dependency-groups]
+dev = [
+    "poethepoet>=0.40.0",
+    "pre-commit>=4.5.1",
+    "pre-commit-uv>=4.2.0",
+    "ruff>=0.14.10",
+    "ty>=0.0.9",
+]
+
+[tool.ruff]
+line-length = 88
+lint.select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ty]
+# Astral ty settings
+
+[tool.poe.tasks]
+lint = "uv run ruff check . --fix"
+fmt = "uv run ruff format ."
+ty = "uv run ty check"
+
+sequence = ["fmt", "lint", "ty"]
+check = ["lint", "ty"]

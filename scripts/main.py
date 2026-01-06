@@ -181,9 +181,8 @@ def main(
     # データ読み込み
     print("\nLoading data...")
     images, labels, class_names = load_dataset(data_dir)
-    print(
-        f"  Samples: {len(images)}, Classes: {dict(zip(class_names, np.bincount(labels)))}"
-    )
+    class_counts = dict(zip(class_names, np.bincount(labels), strict=False))
+    print(f"  Samples: {len(images)}, Classes: {class_counts}")
 
     # クロスバリデーション
     print(f"\nRunning {n_folds}-fold cross validation...")
