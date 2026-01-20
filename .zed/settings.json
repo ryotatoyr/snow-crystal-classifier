@@ -1,0 +1,29 @@
+﻿{
+  "format_on_save": "on",
+  "languages": {
+    "Python": {
+      "language_servers": ["ruff", "pyright"],
+      "formatter": {
+        "external": {
+          "command": "uv",
+          "arguments": ["run", "ruff", "format", "-"]
+        }
+      }
+    }
+  },
+  "lsp": {
+    "ruff": {
+      "initialization_options": {
+        "settings": {
+          "lineLength": 88,
+          "lint": {
+            "select": ["E", "F", "I", "B", "UP"]
+          },
+          "format": {
+            "quoteStyle": "double"
+          }
+        }
+      }
+    }
+  }
+}
