@@ -1,5 +1,3 @@
-"""OpenCV特徴量ベースの雪晶分類器（RandomForest）"""
-
 from collections.abc import Sequence
 from typing import cast
 
